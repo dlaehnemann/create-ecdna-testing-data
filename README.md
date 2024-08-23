@@ -4,7 +4,7 @@
 [![GitHub actions status](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Tests/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3ATests)
 
 
-A Snakemake workflow for creating long read (Nanopore with [`NanoSim`](https://github.com/bcgsc/NanoSim)) and short read (Illumina with [`Circle-Map Simulate`](https://github.com/iprada/Circle-Map)) testing data for ecDNA analysis workflows.
+A Snakemake workflow for creating long read (Nanopore with [`NanoSim-H`](https://github.com/karel-brinda/NanoSim-H)) and short read (Illumina with [`Circle-Map Simulate`](https://github.com/iprada/Circle-Map)) testing data for ecDNA analysis workflows.
 
 
 ## Usage
