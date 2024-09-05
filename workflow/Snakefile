@@ -9,12 +9,27 @@ configfile: "config/config.yaml"
 
 def final_output():
     final_output = []
-    final_output.extend(
-        expand(
-            "results/circles/{circle}.fasta",
-            circle=config['circles'],
+    for g in lookup(dpath="groups", within=config):
+        final_output.extend(
+            expand(
+                "results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.{read}.fq.gz",
+                group=g,
+                alias=lookup(dpath=f"groups/{g}", within=config),
+                coverage=["70"],
+                mean_nuc=["300"],
+                read=["1", "2"],
+            )
         )
-    )
+        final_output.extend(
+            expand(
+                "results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_reads.fq",
+                group=g,
+                model=["human_NA12878_DNA_FAB49712_guppy/training"],
+                alias=lookup(dpath=f"groups/{g}", within=config),
+                coverage=["25"],
+                mean_nuc=["30000"],
+            )
+        )
     return final_output
 
 rule all:
@@ -100,34 +115,78 @@ rule create_full_circle:
 rule create_full_sample:
     input:
         fastas=lambda wc: expand(
-            "results/segments/{circle}.fa.gz",
-            circle=lookup(dpath=f"samples/{wc.sample}", within=config).keys(),
+            "results/circles/{circle}.fa.gz",
+            circle=lookup(dpath=f"groups/{wc.group}/{wc.alias}", within=config),
         ),
     output:
-        fasta="results/circles/{sample}.fa.gz"
+        fasta="results/samples_references/{group}.{alias}.fa"
     log:
-        "logs/circles/{sample}.log"
-    params:
-        command=lambda wc, input: "concat" if len(input.fastas) > 1 else "grep",  # do-nothing grep for circle name if only one segment in circle
-        extra=lambda wc, input: "" if len(input.fastas) > 1 else f'-r -p "{wc.circle}"',
-    threads: 2
-    wrapper:
-        "v4.3.0/bio/seqkit"
+        "logs/samples_references/{group}.{alias}.log"
+    conda: "envs/gzip.yaml"
+    threads: 1
+    shell:
+        "zcat {input.fastas} >{output.fasta} 2>{log}"
 
 
 rule get_circle_stats:
     input:
-        fasta="results/sample_references/{sample}.fasta"
+        fasta="results/samples_references/{group}.{alias}.fa"
     output:
-        tsv="results/sample_references/{sample}.stats.tsv"
+        tsv="results/samples_references/{group}.{alias}.stats.tsv"
     log:
-        "logs/circles/{circle}.stats.log"
+        "logs/samples_references/{group}.{alias}..stats.log"
     params:
         command="stats",
         extra="--tabular"
     threads: 2
     wrapper:
         "v4.3.0/bio/seqkit"
+
+
+rule sliding_window_around_circle_references:
+    input:
+        fasta="results/samples_references/{group}.{alias}.fa",
+    output:
+        fasta="results/samples_references/{group}.{alias}.circular_sliding_windows.fa",
+    log:
+        "logs/samples_references/{group}.{alias}.circular_sliding_windows.log"
+    params:
+        command="sliding",
+        extra="--circular-genome -W 3996 -s 999",
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+def determine_fragment_number(wildcards, input):
+    stats = pd.read_csv(input.tsv, delimiter="\t")
+    total_length = int(stats.loc[0, "sum_len"])
+    return int( np.ceil( total_length * int(wildcards.coverage) / int(wildcards.mean_nuc) ) )
+
+rule simulate_illumina_reads:
+    input:
+        fasta="results/samples_references/{group}.{alias}.circular_sliding_windows.fa",
+        tsv="results/samples_references/{group}.{alias}.stats.tsv",
+    output:
+        fq1="results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.1.fq.gz",
+        fq2="results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.2.fq.gz",
+    log:
+        "logs/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+    conda: "envs/mason.yaml"
+    params:
+        fragment_number=lambda wc, input: determine_fragment_number(wc, input),
+        read_length=lambda wc: int( int(wc.mean_nuc) / 2),
+    threads: 4
+    shell:
+        "mason_simulator "
+        " --input-reference {input.fasta} "
+        " --out {output.fq1} "
+        " --out-right {output.fq2} "
+        " --num-threads {threads} "
+        " --fragment-mean-size 350 "
+        " --illumina-read-length {params.read_length} "
+        " --num-fragments {params.fragment_number} "
+        " 2> {log}"
 
 
 rule download_nanosim_genome_model:
@@ -157,7 +216,7 @@ rule download_nanosim_genome_model:
         "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
 
 
-def determine_read_number(wildcards, input):
+def determine_nanopore_read_number(wildcards, input):
     stats = pd.read_csv(input.tsv, delimiter="\t")
     total_length = int(stats.loc[0, "sum_len"])
     target_coverage = int(wildcards.coverage)
@@ -165,9 +224,9 @@ def determine_read_number(wildcards, input):
     return total_length * target_coverage / mean_read_length
 
 
-rule nanosim_genome:
+rule simulate_nanopore_reads:
     input:
-        reference_genome="results/circles/{sample}.fasta",
+        reference_genome="results/samples_references/{group}.{alias}.fa",
         model=multiext(
             "resources/{model}",
             "_aligned_reads.pkl",
@@ -185,15 +244,15 @@ rule nanosim_genome:
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-        tsv="results/sample_references/{sample}.stats.tsv"
+        tsv="results/samples_references/{group}.{alias}.stats.tsv"
     output:
-        reads="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}.simulated_reads.fq",  # fastq output requires specification of a --basecaller
-        errors="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}simulated_errors.txt",
-        unaligned_reads="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_reads.fq",  # fastq output requires specification of a --basecaller
+        errors="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_errors.txt",
+        unaligned_reads="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}.log",
+        "logs/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     params:
-        extra=lambda wc, input: f"--number {determine_read_number(wc, input)} --median_len {wc.mean_len} --sd_len {np.log(int(wc.mean_len) / 2)} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
+        extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {wc.mean_nuc} --sd_len {np.log(int(wc.mean_nuc) / 3)} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     threads: 4
     wrapper:
-        "master/bio/nanosim/simulator"
+        "feat/add-nanosim-wrapper/bio/nanosim/simulator"
