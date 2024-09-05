@@ -2,3 +2,198 @@
 # Please follow the best practices: 
 # https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
 # in particular regarding the standardized folder structure mentioned there. 
+import pandas as pd
+import numpy as np
+
+configfile: "config/config.yaml"
+
+def final_output():
+    final_output = []
+    final_output.extend(
+        expand(
+            "results/circles/{circle}.fasta",
+            circle=config['circles'],
+        )
+    )
+    return final_output
+
+rule all:
+    input: final_output()
+
+rule get_chromosomes_ref:
+    output:
+        "resources/chromosome_{chrom}.fa.gz",
+    params:
+        species=lookup(dpath="reference/species", within=config),
+        datatype="dna",
+        build=lookup(dpath="reference/build", within=config),
+        release=lookup(dpath="reference/release", within=config),
+        chromosome=["{chrom}"]
+        # branch="plants",  # optional: specify branch
+    log:
+        "logs/get_chromosome_{chrom}_ref.log",
+    cache: "omit-software"  # save space and time with between workflow caching (see docs)
+    wrapper:
+        "v4.3.0/bio/reference/ensembl-sequence"
+
+
+rule config_segment_to_bed:
+    output:
+        bed="results/segments/{circle}.{segment}.bed"
+    log:
+        "logs/segments/{circle}.{segment}.bed.log"
+    params:
+        segment=lambda wc: lookup(dpath=f"circles/{wc.circle}/{wc.segment}", within=config)
+    run:
+        with open(output["bed"], "w") as bed:
+            bed.write(f"{params.segment['chrom']}\t{params.segment['start']}\t{params.segment['end']}\t{params.segment['name']}\t\t{params.segment['strand']}")
+
+
+rule segment_bed_to_fasta:
+    input:
+        fasta=lambda wc: f"resources/chromosome_{lookup(dpath=f"circles/{wc.circle}/{wc.segment}/chrom", within=config)}.fa.gz",
+        bed="results/segments/{circle}.{segment}.bed"
+    output:
+        fasta="results/segments/{circle}.{segment}.fa.gz"
+    log:
+        "logs/segments/{circle}.{segment}.fa.log"
+    params:
+        command="subseq",
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+rule segment_fasta_rename:
+    input:
+        fasta="results/segments/{circle}.{segment}.fa.gz"
+    output:
+        fasta="results/segments/{circle}.{segment}.circle_name.fa.gz"
+    log:
+        "logs/segments/{circle}.{segment}.circle_name.fa.log"
+    params:
+        command="replace",
+        extra='-p "^" -r "{circle} {segment} "'
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+rule create_full_circle:
+    input:
+        fastas=lambda wc: expand(
+            "results/segments/{{circle}}.{segment}.circle_name.fa.gz",
+            segment=lookup(dpath=f"circles/{wc.circle}", within=config).keys(),
+        ),
+    output:
+        fasta="results/circles/{circle}.fa.gz"
+    log:
+        "logs/circles/{circle}.log"
+    params:
+        command=lambda wc, input: "concat" if len(input.fastas) > 1 else "grep",  # do-nothing grep for circle name if only one segment in circle
+        extra=lambda wc, input: "" if len(input.fastas) > 1 else f'-r -p "{wc.circle}"',
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+rule create_full_sample:
+    input:
+        fastas=lambda wc: expand(
+            "results/segments/{circle}.fa.gz",
+            circle=lookup(dpath=f"samples/{wc.sample}", within=config).keys(),
+        ),
+    output:
+        fasta="results/circles/{sample}.fa.gz"
+    log:
+        "logs/circles/{sample}.log"
+    params:
+        command=lambda wc, input: "concat" if len(input.fastas) > 1 else "grep",  # do-nothing grep for circle name if only one segment in circle
+        extra=lambda wc, input: "" if len(input.fastas) > 1 else f'-r -p "{wc.circle}"',
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+rule get_circle_stats:
+    input:
+        fasta="results/sample_references/{sample}.fasta"
+    output:
+        tsv="results/sample_references/{sample}.stats.tsv"
+    log:
+        "logs/circles/{circle}.stats.log"
+    params:
+        command="stats",
+        extra="--tabular"
+    threads: 2
+    wrapper:
+        "v4.3.0/bio/seqkit"
+
+
+rule download_nanosim_genome_model:
+    output:
+        model=multiext(
+            "resources/human_NA12878_DNA_FAB49712_guppy/training",
+            "_aligned_reads.pkl",
+            "_aligned_region.pkl",
+            "_chimeric_info",
+            "_error_markov_model",
+            "_error_rate.tsv",
+            "_first_match.hist",
+            "_gap_length.pkl",
+            "_ht_length.pkl",
+            "_ht_ratio.pkl",
+            "_match_markov_model",
+            "_model_profile",
+            "_reads_alignment_rate",
+            "_strandness_rate",
+            "_unaligned_length.pkl",
+        ),
+    conda: "envs/download.yaml"
+    log: "logs/human_NA12878_DNA_FAB49712_guppy/training_download.log",
+    shell:
+        "cd resources/; "
+        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; "
+        "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
+
+
+def determine_read_number(wildcards, input):
+    stats = pd.read_csv(input.tsv, delimiter="\t")
+    total_length = int(stats.loc[0, "sum_len"])
+    target_coverage = int(wildcards.coverage)
+    mean_read_length = int(wildcards.mean_len)
+    return total_length * target_coverage / mean_read_length
+
+
+rule nanosim_genome:
+    input:
+        reference_genome="results/circles/{sample}.fasta",
+        model=multiext(
+            "resources/{model}",
+            "_aligned_reads.pkl",
+            "_aligned_region.pkl",
+            "_chimeric_info",
+            "_error_markov_model",
+            "_error_rate.tsv",
+            "_first_match.hist",
+            "_gap_length.pkl",
+            "_ht_length.pkl",
+            "_ht_ratio.pkl",
+            "_match_markov_model",
+            "_model_profile",
+            "_reads_alignment_rate",
+            "_strandness_rate",
+            "_unaligned_length.pkl",
+        ),
+        tsv="results/sample_references/{sample}.stats.tsv"
+    output:
+        reads="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}.simulated_reads.fq",  # fastq output requires specification of a --basecaller
+        errors="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}simulated_errors.txt",
+        unaligned_reads="results/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+    log:
+        "logs/nanosim/genome/{model}/{sample}.{coverage}X.mean_read_length_{mean_len}.log",
+    params:
+        extra=lambda wc, input: f"--number {determine_read_number(wc, input)} --median_len {wc.mean_len} --sd_len {np.log(int(wc.mean_len) / 2)} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
+    threads: 4
+    wrapper:
+        "master/bio/nanosim/simulator"

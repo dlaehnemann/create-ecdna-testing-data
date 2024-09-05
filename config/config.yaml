@@ -1,0 +1,55 @@
+reference:
+  species: homo_sapiens
+  build: GRCh38
+  release: 112
+
+circles:
+  # circle 01
+  c01:
+    # segment 01_01 (circle 01, segment 01)
+    s01_01:
+      chrom: 19
+      start: 58294322
+      end: 58322404
+      name: ERVK3-1
+      strand: +
+    s01_02:
+      chrom: 21
+      start: 6215065
+      end: 6225319
+      name: Y_RNA
+      strand: "-"
+  c02:
+    s02_01:
+      chrom: 21
+      start: 21157004
+      end: 21166108
+      name: NCAM2_fragment
+      strand: "+"
+    s02_02:
+      chrom: 21
+      start: 20996019
+      end: 21005007
+      name: NCAM2_start
+      strand: "+"
+  c03:
+    s03_01:
+      chrom: 19
+      start: 11374471
+      end: 11385122
+      name: EPOR
+      strand: "-"
+  c04:
+    s04_01:
+      chrom: 21
+      start: 39861347
+      end: 39872021
+      name: PCP4_start 
+      strand: "+"
+  c05:
+    s05_01:
+      chrom: 19
+      start: 38243526
+      end: 38356624
+      name: PPP1R14A
+      strand: "-"
