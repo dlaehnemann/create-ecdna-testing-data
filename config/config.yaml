@@ -3,6 +3,41 @@ reference:
   build: GRCh38
   release: 112
 
+groups:
+  g01:
+    a1:
+      - c03
+      - c01
+    a2:
+      - c03
+  g02:
+    a1:
+      - c03
+      - c04
+      - c02
+    a2:
+      - c03
+      - c04
+  g03:
+    a1:
+      - c03
+    a2:
+      - c03
+      - c05
+  g04:
+    a1:
+      - c02
+      - c03
+    a2:
+      - c03
+      - c04
+  g05:
+    a1:
+      - c02
+    a2:
+      - c03
+  
+
 circles:
   # circle 01
   c01:
