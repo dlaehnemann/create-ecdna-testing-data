@@ -6,36 +6,37 @@ reference:
 groups:
   g01:
     a1:
-      - c03
-      - c01
+      # value per circle is the Illumina coverage, Nanopore coverage will be 1/4 of that
+      c03: 80
+      c01: 60
     a2:
-      - c03
+      c03: 76
   g02:
     a1:
-      - c03
-      - c04
-      - c02
+      c03: 120
+      c04: 40
+      c02: 40
     a2:
-      - c03
-      - c04
+      c03: 132
+      c04: 36
   g03:
     a1:
-      - c03
+      c03: 72
     a2:
-      - c03
-      - c05
+      c03: 68
+      c05: 32
   g04:
     a1:
-      - c02
-      - c03
+      c02: 32
+      c03: 360
     a2:
-      - c03
-      - c04
+      c03: 184
+      c04: 28
   g05:
     a1:
-      - c02
+      c02: 360
     a2:
-      - c03
+      c03: 40
   
 
 circles:
@@ -70,8 +71,8 @@ circles:
   c03:
     s03_01:
       chrom: 19
-      start: 11374471
-      end: 11385122
+      start: 11374421
+      end: 11385197
       name: EPOR
       strand: "-"
   c04:
