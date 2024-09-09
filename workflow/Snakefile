@@ -7,26 +7,28 @@ import numpy as np
 
 configfile: "config/config.yaml"
 
+wildcard_constraints:
+    technology="|".join(["nanopore", "illumina"]),
+    model="|".join(["/human_NA12878_DNA_FAB49712_guppy/training", ""]),
+
 def final_output():
     final_output = []
     for g in lookup(dpath="groups", within=config):
         final_output.extend(
             expand(
-                "results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.{read}.fq.gz",
+                "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq",
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                coverage=["70"],
                 mean_nuc=["300"],
-                read=["1", "2"],
+                read=[".1", ".2"],
             )
         )
         final_output.extend(
             expand(
-                "results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_reads.fq",
+                "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq",
                 group=g,
-                model=["human_NA12878_DNA_FAB49712_guppy/training"],
+                model=["/human_NA12878_DNA_FAB49712_guppy/training"],
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                coverage=["25"],
                 mean_nuc=["30000"],
             )
         )
@@ -101,9 +103,9 @@ rule create_full_circle:
             segment=lookup(dpath=f"circles/{wc.circle}", within=config).keys(),
         ),
     output:
-        fasta="results/circles/{circle}.fa.gz"
+        fasta="results/circles/{circle}/{circle}.fa"
     log:
-        "logs/circles/{circle}.log"
+        "logs/circles/{circle}/{circle}.log"
     params:
         command=lambda wc, input: "concat" if len(input.fastas) > 1 else "grep",  # do-nothing grep for circle name if only one segment in circle
         extra=lambda wc, input: "" if len(input.fastas) > 1 else f'-r -p "{wc.circle}"',
@@ -112,29 +114,13 @@ rule create_full_circle:
         "v4.3.0/bio/seqkit"
 
 
-rule create_full_sample:
-    input:
-        fastas=lambda wc: expand(
-            "results/circles/{circle}.fa.gz",
-            circle=lookup(dpath=f"groups/{wc.group}/{wc.alias}", within=config),
-        ),
-    output:
-        fasta="results/samples_references/{group}.{alias}.fa"
-    log:
-        "logs/samples_references/{group}.{alias}.log"
-    conda: "envs/gzip.yaml"
-    threads: 1
-    shell:
-        "zcat {input.fastas} >{output.fasta} 2>{log}"
-
-
 rule get_circle_stats:
     input:
-        fasta="results/samples_references/{group}.{alias}.fa"
+        fasta="results/circles/{circle}/{circle}.fa"
     output:
-        tsv="results/samples_references/{group}.{alias}.stats.tsv"
+        tsv="results/circles/{circle}/{circle}.stats.tsv"
     log:
-        "logs/samples_references/{group}.{alias}..stats.log"
+        "logs/circles/{circle}/{circle}.stats.log"
     params:
         command="stats",
         extra="--tabular"
@@ -145,11 +131,11 @@ rule get_circle_stats:
 
 rule sliding_window_around_circle_references:
     input:
-        fasta="results/samples_references/{group}.{alias}.fa",
+        fasta="results/circles/{circle}/{circle}.fa"
     output:
-        fasta="results/samples_references/{group}.{alias}.circular_sliding_windows.fa",
+        fasta="results/circles/{circle}/{circle}.circular_sliding_windows.fa",
     log:
-        "logs/samples_references/{group}.{alias}.circular_sliding_windows.log"
+        "logs/circles/{circle}/{circle}.circular_sliding_windows.log"
     params:
         command="sliding",
         extra="--circular-genome -W 3996 -s 999",
@@ -165,13 +151,13 @@ def determine_fragment_number(wildcards, input):
 
 rule simulate_illumina_reads:
     input:
-        fasta="results/samples_references/{group}.{alias}.circular_sliding_windows.fa",
-        tsv="results/samples_references/{group}.{alias}.stats.tsv",
+        fasta="results/circles/{circle}/{circle}.circular_sliding_windows.fa",
+        tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
-        fq1="results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.1.fq.gz",
-        fq2="results/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.2.fq.gz",
+        fq1="results/circles/{circle}/illumina/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.1.fq",
+        fq2="results/circles/{circle}/illumina/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.2.fq",
     log:
-        "logs/samples/{group}/illumina/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/illumina/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     conda: "envs/mason.yaml"
     params:
         fragment_number=lambda wc, input: determine_fragment_number(wc, input),
@@ -216,19 +202,11 @@ rule download_nanosim_genome_model:
         "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
 
 
-def determine_nanopore_read_number(wildcards, input):
-    stats = pd.read_csv(input.tsv, delimiter="\t")
-    total_length = int(stats.loc[0, "sum_len"])
-    target_coverage = int(wildcards.coverage)
-    mean_read_length = int(wildcards.mean_len)
-    return total_length * target_coverage / mean_read_length
-
-
 rule simulate_nanopore_reads:
     input:
-        reference_genome="results/samples_references/{group}.{alias}.fa",
+        reference_genome="results/circles/{circle}/{circle}.fa",
         model=multiext(
-            "resources/{model}",
+            "resources{model}",
             "_aligned_reads.pkl",
             "_aligned_region.pkl",
             "_chimeric_info",
@@ -244,15 +222,42 @@ rule simulate_nanopore_reads:
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-        tsv="results/samples_references/{group}.{alias}.stats.tsv"
+        tsv="results/circles/{circle}/{circle}.stats.tsv"
     output:
-        reads="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_reads.fq",  # fastq output requires specification of a --basecaller
-        errors="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_errors.txt",
-        unaligned_reads="results/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
+        errors="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
+        unaligned_reads="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/samples/{group}/nanopore/{model}/{group}.{alias}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     params:
         extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {wc.mean_nuc} --sd_len {np.log(int(wc.mean_nuc) / 3)} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     threads: 4
     wrapper:
         "feat/add-nanosim-wrapper/bio/nanosim/simulator"
+
+
+def get_sample_input_circle_reads(wc):
+    circles = lookup(dpath=f"groups/{wc.group}/{wc.alias}", within=config)
+    files = []
+    model = "" if wc.model == "" else f"{wc.model}"
+    for c in circles:
+        cov = lookup(dpath=f"groups/{wc.group}/{wc.alias}/{c}", within=config)
+        if wc.model != "":
+            cov = int(int(cov) / 4)
+        files.append(
+            f"results/circles/{c}/{wc.technology}{model}/{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
+
+        )
+    return files
+
+rule create_full_sample:
+    input:
+        fqs=get_sample_input_circle_reads,
+    output:
+        fq="results/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq"
+    log:
+        "logs/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log"
+    conda: "envs/coreutils.yaml"
+    threads: 1
+    shell:
+        "cat {input.fqs} >{output.fq} 2>{log}"
