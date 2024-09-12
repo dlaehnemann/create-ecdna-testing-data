@@ -35,6 +35,10 @@ def final_output():
                 mean_nuc=[MEAN_NUC_NANOPORE],
             )
         )
+        final_output.extend([
+            "results/samples/samples.tsv",
+            "results/samples/units.tsv",
+        ])
     return final_output
 
 rule all:
@@ -260,10 +264,75 @@ rule create_full_sample:
     input:
         fqs=get_sample_input_circle_reads,
     output:
-        fq="results/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq"
+        fq="results/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq",
     log:
-        "logs/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log"
+        "logs/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
     conda: "envs/coreutils.yaml"
+    localrule: True
     threads: 1
     shell:
         "cat {input.fqs} >{output.fq} 2>{log}"
+
+rule create_samples_sheet:
+    output:
+        tsv="results/samples/samples.tsv"
+    localrule: True
+    run:
+        with open(output.tsv, 'w') as out:
+            out.write(
+                "\t".join([
+                    "sample_name",
+                    "group",
+                    "alias"
+                    "platform",
+                ])
+            )
+            for g in config["groups"]:
+                for alias in config["groups"][g]:
+                    for platform in ["NANOPORE", "ILLUMINA"]:
+                        out.write(
+                            "\t".join([
+                                f"{g}_{alias}",
+                                g,
+                                alias,
+                                platform
+                            ])
+                        )
+                        out.write("\n")
+
+
+rule create_units_sheet:
+    output:
+        tsv="results/samples/units.tsv"
+    localrule: True
+    run:
+        with open(output.tsv, 'w') as out:
+            out.write(
+                "\t".join([
+                    "sample_name",
+                    "unit_name",
+                    "fq1",
+                    "fq2",
+                ])
+            )
+            for g in config["groups"]:
+                for alias in config["groups"][g]:
+                    out.write(
+                        "\t".join([
+                            f"{g}_{alias}",
+                            "u1",
+                            f"../raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.1.fq",
+                            f"../raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.2.fq",
+                        ])
+                    )
+                    out.write("\n")
+                    out.write(
+                        "\t".join([
+                            f"{g}_{alias}",
+                            "u1",
+                            f"../raw/{g}/nanopore{MODEL}/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_NANOPORE}.fq",
+                            "",
+                        ])
+                    )
+                    out.write("\n")
+
