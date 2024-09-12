@@ -7,6 +7,9 @@ import numpy as np
 
 configfile: "config/config.yaml"
 
+MEAN_NUC_ILLUMINA="300"
+MEAN_NUC_NANOPORE="30000"
+
 wildcard_constraints:
     technology="|".join(["nanopore", "illumina"]),
     model="|".join(["/human_NA12878_DNA_FAB49712_guppy/training", ""]),
@@ -19,7 +22,7 @@ def final_output():
                 "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq",
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=["300"],
+                mean_nuc=[MEAN_NUC_ILLUMINA],
                 read=[".1", ".2"],
             )
         )
@@ -29,7 +32,7 @@ def final_output():
                 group=g,
                 model=["/human_NA12878_DNA_FAB49712_guppy/training"],
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=["30000"],
+                mean_nuc=[MEAN_NUC_NANOPORE],
             )
         )
     return final_output
