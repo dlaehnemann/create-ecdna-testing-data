@@ -9,6 +9,7 @@ configfile: "config/config.yaml"
 
 MEAN_NUC_ILLUMINA="300"
 MEAN_NUC_NANOPORE="30000"
+MODEL="/human_NA12878_DNA_FAB49712_guppy/training"
 
 wildcard_constraints:
     technology="|".join(["nanopore", "illumina"]),
@@ -30,7 +31,7 @@ def final_output():
             expand(
                 "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq",
                 group=g,
-                model=["/human_NA12878_DNA_FAB49712_guppy/training"],
+                model=[MODEL],
                 alias=lookup(dpath=f"groups/{g}", within=config),
                 mean_nuc=[MEAN_NUC_NANOPORE],
             )
