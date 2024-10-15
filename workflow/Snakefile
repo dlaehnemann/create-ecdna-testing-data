@@ -284,18 +284,20 @@ rule create_samples_sheet:
                 "\t".join([
                     "sample_name",
                     "group",
-                    "alias"
+                    "alias",
                     "platform",
                 ])
             )
+            out.write("\n")
             for g in config["groups"]:
                 for alias in config["groups"][g]:
                     for platform in ["NANOPORE", "ILLUMINA"]:
+                        p = platform[0].lower()
                         out.write(
                             "\t".join([
-                                f"{g}_{alias}",
+                                f"{g}_{alias}_{p}",
                                 g,
-                                alias,
+                                f"{alias}_{p}",
                                 platform
                             ])
                         )
@@ -316,22 +318,23 @@ rule create_units_sheet:
                     "fq2",
                 ])
             )
+            out.write("\n")
             for g in config["groups"]:
                 for alias in config["groups"][g]:
                     out.write(
                         "\t".join([
-                            f"{g}_{alias}",
+                            f"{g}_{alias}_i",
                             "u1",
-                            f"../raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.1.fq",
-                            f"../raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.2.fq",
+                            f"raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.1.fq",
+                            f"raw/{g}/illumina/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_ILLUMINA}.2.fq",
                         ])
                     )
                     out.write("\n")
                     out.write(
                         "\t".join([
-                            f"{g}_{alias}",
+                            f"{g}_{alias}_n",
                             "u1",
-                            f"../raw/{g}/nanopore{MODEL}/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_NANOPORE}.fq",
+                            f"raw/{g}/nanopore{MODEL}/{g}.{alias}.mean_fragment_nucleotides_{MEAN_NUC_NANOPORE}.fq",
                             "",
                         ])
                     )
