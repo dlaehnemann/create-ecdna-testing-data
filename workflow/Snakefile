@@ -26,7 +26,10 @@ def final_output():
     for g in lookup(dpath="groups", within=config):
         final_output.extend(
             expand(
-                "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq",
+                [
+                    "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
+                    "results/quality_control/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                ],
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
                 mean_nuc=[MEAN_NUC_ILLUMINA],
@@ -35,7 +38,10 @@ def final_output():
         )
         final_output.extend(
             expand(
-                "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq",
+                [
+                    "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
+                    "results/quality_control/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                ],
                 group=g,
                 model=[MODEL],
                 alias=lookup(dpath=f"groups/{g}", within=config),
