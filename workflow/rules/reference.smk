@@ -41,16 +41,15 @@ rule merge_reference_chromosomes:
         "cat {input.chromosome_fastas} >{output} 2>{log}"
 
 
-rule bwa_mem2_index:
+rule minimap2_index:
     input:
-        "resources/all_used_chromosomes.fa"
+        target="resources/all_used_chromosomes.fa"
     output:
-        "resources/all_used_chromosomes.fa.0123",
-        "resources/all_used_chromosomes.fa.amb",
-        "resources/all_used_chromosomes.fa.ann",
-        "resources/all_used_chromosomes.fa.bwt.2bit.64",
-        "resources/all_used_chromosomes.fa.pac",
+        "resources/all_used_chromosomes.mmi"
     log:
-        "logs/bwa-mem2_index/all_used_chromosomes.log",
+        "logs/minimap2_index/all_used_chromosomes.mmi"
+    params:
+        extra=""  # optional additional args
+    threads: 3
     wrapper:
-        "v5.5.2/bio/bwa-mem2/index"
+        "v5.5.2/bio/minimap2/index"

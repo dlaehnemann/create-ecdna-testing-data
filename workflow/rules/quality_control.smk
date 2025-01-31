@@ -1,22 +1,23 @@
-rule map_reads:
+rule map_reads_minimap2:
     input:
-        reads=expand(
+        target="resources/all_used_chromosomes.mmi",
+        query=expand(
             "results/samples/{{group}}/{{technology}}{{model}}/{{group}}.{{alias}}.mean_fragment_nucleotides_{{mean_nuc}}{read}.fq.gz",
             read=lambda wc: [".1", ".2"] if wc.technology == "illumina" else "",
         ),
-        # Index needs to be a list of all index files created by bwa
-        idx=multiext(
-            "resources/all_used_chromosomes.fa",
-            ".0123",
-            ".amb",
-            ".ann",
-            ".bwt.2bit.64",
-            ".pac"
-        ),
+
     output:
         "results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
     log:
-        "logs/map_reads/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/map_reads_minimap2/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.log",
+    params:
+        extra=lambda wc: "-x map-ont" if wc.technology == "nanopore" else "-x sr",  # optional
+        sorting="coordinate",  # optional: Enable sorting. Possible values: 'none', 'queryname' or 'coordinate'
+        sort_extra="",  # optional: extra arguments for samtools/picard
+    threads: 3
+    wrapper:
+        "v5.5.2/bio/minimap2/aligner"
+
     params:
         extra=r"-R '@RG\tID:{technology}{model}.{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}\tSM:{technology}{model}.{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}'",
         sort="samtools",  # Can be 'none', 'samtools', or 'picard'.
