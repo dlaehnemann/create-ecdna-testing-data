@@ -18,19 +18,54 @@ rule map_reads_minimap2:
     wrapper:
         "v5.5.2/bio/minimap2/aligner"
 
+
+rule samtools_index:
+    input:
+        "results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+    output:
+        "results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam.bai",
+    log:
+        "logs/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.index_bam.log",
     params:
-        extra=r"-R '@RG\tID:{technology}{model}.{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}\tSM:{technology}{model}.{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}'",
-        sort="samtools",  # Can be 'none', 'samtools', or 'picard'.
-        sort_order="coordinate",  # Can be 'coordinate' (default) or 'queryname'.
-        sort_extra="",  # Extra args for samtools/picard sorts.
-    threads: 8
+        extra="",  # optional params string
+    threads: 4  # This value - 1 will be sent to -@
     wrapper:
-        "v5.5.2/bio/bwa-mem2/mem"
+        "v5.5.2/bio/samtools/index"
+
+ALL_CIRCLE_SEGMENT_COMBINATIONS=[ {c:s} for c in config['circles'] for s in config['circles'][c] ]
+
+rule create_all_segments_bed:
+    input:
+        segments=expand(
+            "results/segments/{circle}.{segment}.bed",
+            zip,
+            circle=[ list(d)[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
+            segment=[ list(d.values())[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
+        ),
+    output:
+        all_segments="results/segments/all_segments.bed",
+    log:
+        "logs/segments/all_segments.log",
+    shell:
+        "(cat {input.segments} | sort -k 1,1 -k2,2n > {output.all_segments}) 2>{log}"
 
 
-#rule create_all_segments_bed:
-#    input:
-#    output:
-#        "results/segments/all_segments.bed",
-#    conda:
-#        "../envs/bedtools.yaml"
+rule mosdepth_cram:
+    input:
+        bam="results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+        bai="results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam.bai",
+        bed="results/segments/all_segments.bed",
+        fasta="resources/all_used_chromosomes.fa",
+    output:
+        "results/quality_control/mosdepth_coverage/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.global.dist.txt",
+        "results/quality_control/mosdepth_coverage/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.region.dist.txt",
+        "results/quality_control/mosdepth_coverage/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
+        summary="results/quality_control/mosdepth_coverage/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.summary.txt",  # this named output is required for prefix parsing
+    log:
+        "logs/quality_control/mosdepth_coverage/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.coverage.log",
+    params:
+        extra="--no-per-base",  # optional
+    # additional decompression threads through `--threads`
+    threads: 4  # This value - 1 will be sent to `--threads`
+    wrapper:
+        "v5.5.2/bio/mosdepth"

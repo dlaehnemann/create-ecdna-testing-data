@@ -29,6 +29,7 @@ def final_output():
                 [
                     "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
                     "results/quality_control/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                    "results/quality_control/mosdepth_coverage/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
@@ -41,6 +42,7 @@ def final_output():
                 [
                     "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
                     "results/quality_control/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                    "results/quality_control/mosdepth_coverage/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
                 model=[MODEL],
