@@ -8,7 +8,7 @@ import numpy as np
 configfile: "config/config.yaml"
 
 MEAN_NUC_ILLUMINA="300"
-MEAN_NUC_NANOPORE="30000"
+MEAN_NUC_NANOPORE="2300"
 MODEL="/human_NA12878_DNA_FAB49712_guppy/training"
 
 wildcard_constraints:
