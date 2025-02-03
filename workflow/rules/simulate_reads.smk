@@ -128,8 +128,7 @@ rule simulate_nanopore_reads:
     params:
         extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     resources:
-        mem_mb=99000,  # this very high memory requirement was for one particular circle: results/circles/c02/nanopore/human_NA12878_DNA_FAB49712_guppy/training/c02.10X.mean_fragment_nucleotides_30000.fq
-        #lsf_queue="highmem",  # if you work on a cluster, make this the variable you need to send your job to a queue with the above mentioned amount of memory
+        mem_mb=8000,
     threads: 4
     wrapper:
         "v5.5.2/bio/nanosim/simulator"
