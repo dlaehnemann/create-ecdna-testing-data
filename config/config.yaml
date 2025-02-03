@@ -51,41 +51,41 @@ circles:
       strand: +
     s01_02:
       chrom: 21
-      start: 6215065
-      end: 6225319
+      start: 6205065
+      end: 6228319
       name: Y_RNA
       strand: "-"
   c02:
     s02_01:
       chrom: 21
-      start: 21157004
+      start: 21147004
       end: 21166108
       name: NCAM2_fragment
       strand: "+"
     s02_02:
       chrom: 21
       start: 20996019
-      end: 21005007
+      end: 21015007
       name: NCAM2_start
       strand: "+"
   c03:
     s03_01:
       chrom: 19
-      start: 11374421
-      end: 11385197
+      start: 11364421
+      end: 11395197
       name: EPOR
       strand: "-"
   c04:
     s04_01:
       chrom: 21
-      start: 39861347
-      end: 39872021
+      start: 39851347
+      end: 39879021
       name: PCP4_start 
       strand: "+"
   c05:
     s05_01:
       chrom: 19
-      start: 38243526
-      end: 38356624
+      start: 38253526
+      end: 38346624
       name: PPP1R14A
       strand: "-"
