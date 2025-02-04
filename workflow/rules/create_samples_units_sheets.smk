@@ -1,6 +1,8 @@
 rule create_samples_sheet:
     output:
         tsv="results/samples/samples.tsv",
+    log:
+        "logs/samples/samples.tsv.log",
     localrule: True
     run:
         with open(output.tsv, "w") as out:
@@ -28,6 +30,8 @@ rule create_samples_sheet:
 rule create_units_sheet:
     output:
         tsv="results/samples/units.tsv",
+    log:
+        "logs/samples/units.tsv.log",
     localrule: True
     run:
         with open(output.tsv, "w") as out:
