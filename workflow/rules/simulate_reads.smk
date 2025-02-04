@@ -1,13 +1,13 @@
 rule get_circle_stats:
     input:
-        fasta="results/circles/{circle}/{circle}.fa"
+        fasta="results/circles/{circle}/{circle}.fa",
     output:
-        tsv="results/circles/{circle}/{circle}.stats.tsv"
+        tsv="results/circles/{circle}/{circle}.stats.tsv",
     log:
-        "logs/circles/{circle}/{circle}.stats.log"
+        "logs/circles/{circle}/{circle}.stats.log",
     params:
         command="stats",
-        extra="--tabular"
+        extra="--tabular",
     threads: 2
     wrapper:
         "v4.3.0/bio/seqkit"
@@ -15,11 +15,11 @@ rule get_circle_stats:
 
 rule sliding_window_around_circle_references:
     input:
-        fasta="results/circles/{circle}/{circle}.fa"
+        fasta="results/circles/{circle}/{circle}.fa",
     output:
         fasta="results/circles/{circle}/{circle}.circular_sliding_windows.fa",
     log:
-        "logs/circles/{circle}/{circle}.circular_sliding_windows.log"
+        "logs/circles/{circle}/{circle}.circular_sliding_windows.log",
     params:
         command="sliding",
         extra="--circular-genome -W 3996 -s 999",
@@ -31,7 +31,10 @@ rule sliding_window_around_circle_references:
 def determine_fragment_number(wildcards, input):
     stats = pd.read_csv(input.tsv, delimiter="\t")
     total_length = int(stats.loc[0, "sum_len"])
-    return int( np.ceil( total_length * int(wildcards.coverage) / int(wildcards.mean_nuc) ) )
+    return int(
+        np.ceil(total_length * int(wildcards.coverage) / int(wildcards.mean_nuc))
+    )
+
 
 rule simulate_illumina_reads:
     input:
@@ -42,10 +45,11 @@ rule simulate_illumina_reads:
         fq2="results/circles/{circle}/illumina/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.2.fq",
     log:
         "logs/circles/{circle}/illumina/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
-    conda: "../envs/mason.yaml"
+    conda:
+        "../envs/mason.yaml"
     params:
         fragment_number=lambda wc, input: determine_fragment_number(wc, input),
-        read_length=lambda wc: int( int(wc.mean_nuc) / 2),
+        read_length=lambda wc: int(int(wc.mean_nuc) / 2),
     threads: 4
     shell:
         "mason_simulator "
@@ -78,8 +82,10 @@ rule download_nanosim_genome_model:
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-    conda: "../envs/download.yaml"
-    log: "logs/human_NA12878_DNA_FAB49712_guppy/training_download.log",
+    conda:
+        "../envs/download.yaml"
+    log:
+        "logs/human_NA12878_DNA_FAB49712_guppy/training_download.log",
     shell:
         "(cd resources/; "
         "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; "
@@ -87,10 +93,12 @@ rule download_nanosim_genome_model:
         "rm human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         ") 2>{log}"
 
+
 # I have no intuitive understanding of this parameter, apart from that a higher
 # value will mean a wider and flatter distribution. So I am simply fixing it to
 # a reasonable value in this spot, and don't expose it to the config.yaml file.
-SD_LOGNORMAL=1.1
+SD_LOGNORMAL = 1.1
+
 
 def determine_nanopore_median_nuc(wildcards):
     # the log-normal was quite a bit to wrap my head around, this figure helped:
@@ -98,7 +106,8 @@ def determine_nanopore_median_nuc(wildcards):
     # Following the formula given for the expected value, the following calculates the e^mu, which seems
     # to be what you need to specify as --median_len here, as this then gets transformed with np.log(e^mu)
     # to mu in the nanosim code.
-    return int(int(wildcards.mean_nuc)/np.exp(SD_LOGNORMAL**2/2))
+    return int(int(wildcards.mean_nuc) / np.exp(SD_LOGNORMAL**2 / 2))
+
 
 rule simulate_nanopore_reads:
     input:
@@ -120,7 +129,7 @@ rule simulate_nanopore_reads:
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-        tsv="results/circles/{circle}/{circle}.stats.tsv"
+        tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
         reads="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
         errors="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
@@ -128,7 +137,7 @@ rule simulate_nanopore_reads:
     log:
         "logs/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     params:
-        extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular", # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
+        extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular",  # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     resources:
         mem_mb=8000,
     threads: 4
@@ -146,9 +155,9 @@ def get_sample_input_circle_reads(wc):
             cov = int(int(cov) / 4)
         files.append(
             f"results/circles/{c}/{wc.technology}{model}/{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
-
         )
     return files
+
 
 rule create_full_sample:
     input:
@@ -157,7 +166,8 @@ rule create_full_sample:
         fq="results/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
     log:
         "logs/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
-    conda: "../envs/coreutils.yaml"
+    conda:
+        "../envs/coreutils.yaml"
     localrule: True
     threads: 1
     shell:

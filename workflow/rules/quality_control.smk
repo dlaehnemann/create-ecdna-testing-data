@@ -5,7 +5,6 @@ rule map_reads_minimap2:
             "results/samples/{{group}}/{{technology}}{{model}}/{{group}}.{{alias}}.mean_fragment_nucleotides_{{mean_nuc}}{read}.fq.gz",
             read=lambda wc: [".1", ".2"] if wc.technology == "illumina" else "",
         ),
-
     output:
         "results/quality_control/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
     log:
@@ -32,15 +31,19 @@ rule samtools_index:
     wrapper:
         "v5.5.2/bio/samtools/index"
 
-ALL_CIRCLE_SEGMENT_COMBINATIONS=[ {c:s} for c in config['circles'] for s in config['circles'][c] ]
+
+ALL_CIRCLE_SEGMENT_COMBINATIONS = [
+    {c: s} for c in config["circles"] for s in config["circles"][c]
+]
+
 
 rule create_all_segments_bed:
     input:
         segments=expand(
             "results/segments/{circle}.{segment}.bed",
             zip,
-            circle=[ list(d)[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
-            segment=[ list(d.values())[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
+            circle=[list(d)[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
+            segment=[list(d.values())[0] for d in ALL_CIRCLE_SEGMENT_COMBINATIONS],
         ),
     output:
         all_segments="results/segments/all_segments.bed",
