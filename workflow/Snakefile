@@ -1,21 +1,25 @@
-# Main entrypoint of the workflow. 
-# Please follow the best practices: 
+# Main entrypoint of the workflow.
+# Please follow the best practices:
 # https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there. 
+# in particular regarding the standardized folder structure mentioned there.
 import pandas as pd
 import numpy as np
 
+
 configfile: "config/config.yaml"
+
 
 wildcard_constraints:
     technology="|".join(["nanopore", "illumina"]),
     model="|".join(["/human_NA12878_DNA_FAB49712_guppy/training", ""]),
+
 
 include: "rules/reference.smk"
 include: "rules/create_circle_sequences.smk"
 include: "rules/simulate_reads.smk"
 include: "rules/quality_control.smk"
 include: "rules/create_samples_units_sheets.smk"
+
 
 def final_output():
     final_output = []
@@ -29,7 +33,9 @@ def final_output():
                 ],
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=lookup(dpath=f"parameters/mean_illumina_joint_read_length", within=config),
+                mean_nuc=lookup(
+                    dpath=f"parameters/mean_illumina_joint_read_length", within=config
+                ),
                 read=[".1", ".2"],
             )
         )
@@ -41,16 +47,24 @@ def final_output():
                     "results/quality_control/mosdepth_coverage/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
-                model=lookup(dpath=f"parameters/nanosim_pretrained_model", within=config),
+                model=lookup(
+                    dpath=f"parameters/nanosim_pretrained_model", within=config
+                ),
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=lookup(dpath=f"parameters/mean_nanopore_read_length", within=config),
+                mean_nuc=lookup(
+                    dpath=f"parameters/mean_nanopore_read_length", within=config
+                ),
             )
         )
-        final_output.extend([
-            "results/samples/samples.tsv",
-            "results/samples/units.tsv",
-        ])
+        final_output.extend(
+            [
+                "results/samples/samples.tsv",
+                "results/samples/units.tsv",
+            ]
+        )
     return final_output
 
+
 rule all:
-    input: final_output()
+    input:
+        final_output(),

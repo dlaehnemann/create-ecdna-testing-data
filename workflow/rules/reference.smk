@@ -6,7 +6,7 @@ rule get_reference_chromosomes:
         datatype="dna",
         build=lookup(dpath="reference/build", within=config),
         release=lookup(dpath="reference/release", within=config),
-        chromosome=["{chrom}"]
+        chromosome=["{chrom}"],
         # branch="plants",  # optional: specify branch
     log:
         "logs/get_chromosome_{chrom}_ref.log",
@@ -18,9 +18,9 @@ rule get_reference_chromosomes:
 ALL_USED_CHROMOSOMES = sorted(
     set(
         [
-            config['circles'][c][s]['chrom']
-            for c in config['circles'].keys()
-            for s in config['circles'][c].keys()
+            config["circles"][c][s]["chrom"]
+            for c in config["circles"].keys()
+            for s in config["circles"][c].keys()
         ]
     )
 )
@@ -29,13 +29,12 @@ ALL_USED_CHROMOSOMES = sorted(
 rule merge_reference_chromosomes:
     input:
         chromosome_fastas=expand(
-            "resources/chromosome_{chrom}.fa",
-            chrom=ALL_USED_CHROMOSOMES
+            "resources/chromosome_{chrom}.fa", chrom=ALL_USED_CHROMOSOMES
         ),
     output:
-        "resources/all_used_chromosomes.fa"
+        "resources/all_used_chromosomes.fa",
     log:
-        "logs/merge_all_used_chromosomes.log"
+        "logs/merge_all_used_chromosomes.log",
     cache: "omit-software"  # save space and time with between workflow caching (see docs)
     shell:
         "cat {input.chromosome_fastas} >{output} 2>{log}"
@@ -43,13 +42,13 @@ rule merge_reference_chromosomes:
 
 rule minimap2_index:
     input:
-        target="resources/all_used_chromosomes.fa"
+        target="resources/all_used_chromosomes.fa",
     output:
-        "resources/all_used_chromosomes.mmi"
+        "resources/all_used_chromosomes.mmi",
     log:
-        "logs/minimap2_index/all_used_chromosomes.mmi"
+        "logs/minimap2_index/all_used_chromosomes.mmi",
     params:
-        extra=""  # optional additional args
+        extra="",  # optional additional args
     threads: 3
     wrapper:
         "v5.5.2/bio/minimap2/index"
