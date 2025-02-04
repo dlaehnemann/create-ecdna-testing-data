@@ -1,2 +1,3 @@
-Describe how to configure the workflow (using config.yaml and maybe additional files).
-All of them need to be present with example entries inside of the config folder.
+All configuration necessary for this workflow should be done in the file `config/config.yaml`.
+Extensive comments there explain as much as possible.
+If you have further questions, please feel free to file an issue in the repository.

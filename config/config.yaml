@@ -1,12 +1,38 @@
 reference:
+  # For a quick check of available species, see:
+  # https://www.ensembl.org/info/about/species.html
+  # For full valid species names, consult the respective table for the release
+  # you specify below, for example for ‘112’ this is at:
+  # https://ftp.ensembl.org/pub/release-112/species_EnsemblVertebrates.txt
   species: homo_sapiens
+  # This build needs to be available for the species and release you selected.
+  # One build that is sure to exist is always the one listed in this table:
+  # https://ftp.ensembl.org/pub/release-112/species_EnsemblVertebrates.txt
   build: GRCh38
+  # Available releases can be checked via:
+  # https://ftp.ensembl.org/pub/
+  # A recent release is usually recommended, especially for recent builds,
+  # as older releases might not contain newer builds.
   release: 112
 
+# PARAMETERS
+
+parameters:
+  mean_illumina_joint_read_length: 300
+  mean_nanopore_read_length: 2300
+  nanosim_pretrained_model: "/human_NA12878_DNA_FAB49712_guppy/training"
+
+# SAMPLE SETUP
+
+# Each group has an a1 and an a2 alias sample, which can contain different
+# circles at different coverages. The coverage value per circle that is listed
+# here is the intended Illumina coverage. The simulation will aim for a
+# Nanopore coverage of about 1/4 of that, but will usually end up with a
+# slighlty lower coverage due to the effects described here:
+# https://github.com/bcgsc/NanoSim/issues/241#issue-2828154586
 groups:
   g01:
     a1:
-      # value per circle is the Illumina coverage, Nanopore coverage will be 1/4 of that
       c03: 60
       c01: 40
     a2:
@@ -39,6 +65,11 @@ groups:
       c03: 40
   
 
+# For each circle, you can define one or more segments on chromosomes from the
+# genome version you specify above. Sequence segments will be concatenated in
+# the order given, taking the sequence from the specified strand. Segment names
+# can be chosen arbitrarily and are mainly for tracking in quality control and
+# in validating results.
 circles:
   # circle 01
   c01:
@@ -48,7 +79,7 @@ circles:
       start: 58294322
       end: 58322404
       name: ERVK3-1
-      strand: +
+      strand: "+"
     s01_02:
       chrom: 21
       start: 6205065

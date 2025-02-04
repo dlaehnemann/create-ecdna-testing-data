@@ -87,7 +87,9 @@ rule download_nanosim_genome_model:
         "rm human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         ") 2>{log}"
 
-
+# I have no intuitive understanding of this parameter, apart from that a higher
+# value will mean a wider and flatter distribution. So I am simply fixing it to
+# a reasonable value in this spot, and don't expose it to the config.yaml file.
 SD_LOGNORMAL=1.1
 
 def determine_nanopore_median_nuc(wildcards):

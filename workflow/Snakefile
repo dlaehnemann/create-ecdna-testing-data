@@ -7,10 +7,6 @@ import numpy as np
 
 configfile: "config/config.yaml"
 
-MEAN_NUC_ILLUMINA="300"
-MEAN_NUC_NANOPORE="2300"
-MODEL="/human_NA12878_DNA_FAB49712_guppy/training"
-
 wildcard_constraints:
     technology="|".join(["nanopore", "illumina"]),
     model="|".join(["/human_NA12878_DNA_FAB49712_guppy/training", ""]),
@@ -33,7 +29,7 @@ def final_output():
                 ],
                 group=g,
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=[MEAN_NUC_ILLUMINA],
+                mean_nuc=lookup(dpath=f"parameters/mean_illumina_joint_read_length", within=config),
                 read=[".1", ".2"],
             )
         )
@@ -45,9 +41,9 @@ def final_output():
                     "results/quality_control/mosdepth_coverage/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
-                model=[MODEL],
+                model=lookup(dpath=f"parameters/nanosim_pretrained_model", within=config),
                 alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=[MEAN_NUC_NANOPORE],
+                mean_nuc=lookup(dpath=f"parameters/mean_nanopore_read_length", within=config),
             )
         )
         final_output.extend([
