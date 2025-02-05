@@ -3,13 +3,12 @@ rule config_segment_to_bed:
         bed="results/segments/{circle}.{segment}.bed",
     log:
         "logs/segments/{circle}.{segment}.bed.log",
+    conda:
+        "../envs/python.yaml"
     params:
         segment=lookup(dpath="circles/{circle}/{segment}", within=config),
-    run:
-        with open(output["bed"], "w") as bed:
-            bed.write(
-                f"{params.segment['chrom']}\t{params.segment['start']}\t{params.segment['end']}\t{params.segment['name']}\t\t{params.segment['strand']}\n"
-            )
+    script:
+        "../config_segment_to_bed.py"
 
 
 rule segment_bed_to_fasta:

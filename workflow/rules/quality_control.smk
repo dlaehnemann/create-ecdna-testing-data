@@ -49,6 +49,8 @@ rule create_all_segments_bed:
         all_segments="results/segments/all_segments.bed",
     log:
         "logs/segments/all_segments.log",
+    conda:
+        "../envs/coreutils.yaml"
     shell:
         "(cat {input.segments} | sort -k 1,1 -k2,2n > {output.all_segments}) 2>{log}"
 

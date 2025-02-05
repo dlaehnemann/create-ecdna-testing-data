@@ -34,6 +34,8 @@ rule merge_reference_chromosomes:
         "resources/all_used_chromosomes.fa",
     log:
         "logs/merge_all_used_chromosomes.log",
+    conda:
+        "../envs/coreutils.yaml"
     cache: "omit-software"  # save space and time with between workflow caching (see docs)
     shell:
         "cat {input.chromosome_fastas} >{output} 2>{log}"

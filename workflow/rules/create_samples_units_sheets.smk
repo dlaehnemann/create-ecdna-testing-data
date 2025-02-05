@@ -3,6 +3,8 @@ rule create_samples_sheet:
         tsv="results/samples/samples.tsv",
     log:
         "logs/samples/samples.tsv.log",
+    conda:
+        "../envs/python.yaml"
     localrule: True
     script:
         "../create_samples_sheet.py"
@@ -13,6 +15,8 @@ rule create_units_sheet:
         tsv="results/samples/units.tsv",
     log:
         "logs/samples/units.tsv.log",
+    conda:
+        "../envs/python.yaml"
     localrule: True
     params:
         mean_nuc_illumina=lookup(
