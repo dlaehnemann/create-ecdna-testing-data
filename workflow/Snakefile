@@ -11,7 +11,7 @@ configfile: "config/config.yaml"
 
 wildcard_constraints:
     technology="|".join(["nanopore", "illumina"]),
-    model="|".join(["/human_NA12878_DNA_FAB49712_guppy/training", ""]),
+    model="|".join(["human_NA12878_DNA_FAB49712_guppy/training/", ""]),
 
 
 include: "rules/reference.smk"
@@ -42,9 +42,9 @@ def final_output():
         final_output.extend(
             expand(
                 [
-                    "results/samples/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
-                    "results/quality_control/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
-                    "results/quality_control/mosdepth_coverage/{group}/nanopore{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
+                    "results/samples/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
+                    "results/quality_control/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                    "results/quality_control/mosdepth_coverage/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
                 model=lookup(

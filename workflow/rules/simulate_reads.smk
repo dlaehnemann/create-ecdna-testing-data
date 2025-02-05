@@ -131,11 +131,11 @@ rule simulate_nanopore_reads:
         ),
         tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
-        reads="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
-        errors="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
-        unaligned_reads="results/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
+        errors="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
+        unaligned_reads="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/circles/{circle}/nanopore{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     params:
         extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular",  # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     resources:
@@ -154,7 +154,7 @@ def get_sample_input_circle_reads(wc):
         if wc.model != "":
             cov = int(int(cov) / 4)
         files.append(
-            f"results/circles/{c}/{wc.technology}{model}/{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
+            f"results/circles/{c}/{wc.technology}/{model}{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
         )
     return files
 
@@ -163,9 +163,9 @@ rule create_full_sample:
     input:
         fqs=get_sample_input_circle_reads,
     output:
-        fq="results/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
+        fq="results/samples/{group}/{technology}/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
     log:
-        "logs/samples/{group}/{technology}{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
+        "logs/samples/{group}/{technology}/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
     conda:
         "../envs/coreutils.yaml"
     localrule: True
