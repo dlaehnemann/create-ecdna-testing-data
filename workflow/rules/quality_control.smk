@@ -2,7 +2,7 @@ rule map_reads_minimap2:
     input:
         target="resources/all_used_chromosomes.mmi",
         query=expand(
-            "results/samples/{{group}}/{{technology}}{{model}}/{{group}}.{{alias}}.mean_fragment_nucleotides_{{mean_nuc}}{read}.fq.gz",
+            "results/samples/{{group}}/{{technology}}/{{model}}{{group}}.{{alias}}.mean_fragment_nucleotides_{{mean_nuc}}{read}.fq.gz",
             read=lambda wc: [".1", ".2"] if wc.technology == "illumina" else "",
         ),
     output:

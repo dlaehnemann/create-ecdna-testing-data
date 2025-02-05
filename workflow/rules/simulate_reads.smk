@@ -58,7 +58,7 @@ rule simulate_illumina_reads:
 rule download_nanosim_genome_model:
     output:
         model=multiext(
-            "resources/human_NA12878_DNA_FAB49712_guppy/training",
+            "resources/{model_files}",
             "_aligned_reads.pkl",
             "_aligned_region.pkl",
             "_chimeric_info",
@@ -77,10 +77,10 @@ rule download_nanosim_genome_model:
     conda:
         "../envs/download.yaml"
     log:
-        "logs/human_NA12878_DNA_FAB49712_guppy/training_download.log",
+        "logs/{model_files}_download.log",
     shell:
         "(cd resources/; "
-        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; "
+        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; " # TODO: make this more flexible with newer pretrained models
         "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         "rm human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         ") 2>{log}"
@@ -90,7 +90,7 @@ rule simulate_nanopore_reads:
     input:
         reference_genome="results/circles/{circle}/{circle}.fa",
         model=multiext(
-            "resources{model}",
+            "resources/{model_files}",
             "_aligned_reads.pkl",
             "_aligned_region.pkl",
             "_chimeric_info",
@@ -108,11 +108,11 @@ rule simulate_nanopore_reads:
         ),
         tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
-        reads="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
-        errors="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
-        unaligned_reads="results/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
+        errors="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
+        unaligned_reads="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/circles/{circle}/nanopore/{model}{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
     params:
         extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular",  # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
     resources:
