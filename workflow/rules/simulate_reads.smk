@@ -28,14 +28,6 @@ rule sliding_window_around_circle_references:
         "v4.3.0/bio/seqkit"
 
 
-def determine_fragment_number(wildcards, input):
-    stats = pd.read_csv(input.tsv, delimiter="\t")
-    total_length = int(stats.loc[0, "sum_len"])
-    return int(
-        np.ceil(total_length * int(wildcards.coverage) / int(wildcards.mean_nuc))
-    )
-
-
 rule simulate_illumina_reads:
     input:
         fasta="results/circles/{circle}/{circle}.circular_sliding_windows.fa",
@@ -94,21 +86,6 @@ rule download_nanosim_genome_model:
         ") 2>{log}"
 
 
-# I have no intuitive understanding of this parameter, apart from that a higher
-# value will mean a wider and flatter distribution. So I am simply fixing it to
-# a reasonable value in this spot, and don't expose it to the config.yaml file.
-SD_LOGNORMAL = 1.1
-
-
-def determine_nanopore_median_nuc(wildcards):
-    # the log-normal was quite a bit to wrap my head around, this figure helped:
-    # https://en.wikipedia.org/wiki/Log-normal_distribution#/media/File:Lognormal_Distribution.svg
-    # Following the formula given for the expected value, the following calculates the e^mu, which seems
-    # to be what you need to specify as --median_len here, as this then gets transformed with np.log(e^mu)
-    # to mu in the nanosim code.
-    return int(int(wildcards.mean_nuc) / np.exp(SD_LOGNORMAL**2 / 2))
-
-
 rule simulate_nanopore_reads:
     input:
         reference_genome="results/circles/{circle}/{circle}.fa",
@@ -143,20 +120,6 @@ rule simulate_nanopore_reads:
     threads: 4
     wrapper:
         "v5.5.2/bio/nanosim/simulator"
-
-
-def get_sample_input_circle_reads(wc):
-    circles = lookup(dpath=f"groups/{wc.group}/{wc.alias}", within=config)
-    files = []
-    model = "" if wc.model == "" else f"{wc.model}"
-    for c in circles:
-        cov = lookup(dpath=f"groups/{wc.group}/{wc.alias}/{c}", within=config)
-        if wc.model != "":
-            cov = int(int(cov) / 4)
-        files.append(
-            f"results/circles/{c}/{wc.technology}/{model}{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
-        )
-    return files
 
 
 rule create_full_sample:

@@ -14,55 +14,12 @@ wildcard_constraints:
     model="|".join(["human_NA12878_DNA_FAB49712_guppy/training/", ""]),
 
 
+include: "rules/common.smk"
 include: "rules/reference.smk"
 include: "rules/create_circle_sequences.smk"
 include: "rules/simulate_reads.smk"
 include: "rules/quality_control.smk"
 include: "rules/create_samples_units_sheets.smk"
-
-
-def final_output():
-    final_output = []
-    for g in lookup(dpath="groups", within=config):
-        final_output.extend(
-            expand(
-                [
-                    "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
-                    "results/quality_control/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
-                    "results/quality_control/mosdepth_coverage/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
-                ],
-                group=g,
-                alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=lookup(
-                    dpath=f"parameters/mean_illumina_joint_read_length", within=config
-                ),
-                read=[".1", ".2"],
-            )
-        )
-        final_output.extend(
-            expand(
-                [
-                    "results/samples/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
-                    "results/quality_control/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
-                    "results/quality_control/mosdepth_coverage/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
-                ],
-                group=g,
-                model=lookup(
-                    dpath=f"parameters/nanosim_pretrained_model", within=config
-                ),
-                alias=lookup(dpath=f"groups/{g}", within=config),
-                mean_nuc=lookup(
-                    dpath=f"parameters/mean_nanopore_read_length", within=config
-                ),
-            )
-        )
-        final_output.extend(
-            [
-                "results/samples/samples.tsv",
-                "results/samples/units.tsv",
-            ]
-        )
-    return final_output
 
 
 rule all:
