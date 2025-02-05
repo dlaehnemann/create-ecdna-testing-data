@@ -7,7 +7,7 @@ rule create_samples_sheet:
         "../envs/python.yaml"
     localrule: True
     script:
-        "../create_samples_sheet.py"
+        "../scripts/create_samples_sheet.py"
 
 
 rule create_units_sheet:
@@ -29,4 +29,4 @@ rule create_units_sheet:
             dpath="parameters/nanosim_pretrained_model", within=config
         ),
     script:
-        "../create_units_sheet.py"
+        "../scripts/create_units_sheet.py"

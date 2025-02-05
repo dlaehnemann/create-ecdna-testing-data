@@ -8,7 +8,7 @@ rule config_segment_to_bed:
     params:
         segment=lookup(dpath="circles/{circle}/{segment}", within=config),
     script:
-        "../config_segment_to_bed.py"
+        "../scripts/config_segment_to_bed.py"
 
 
 rule segment_bed_to_fasta:
