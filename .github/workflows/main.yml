@@ -42,17 +42,20 @@ jobs:
     - name: dryrun workflow
       uses: snakemake/snakemake-github-action@v2
       with:
+        directory: .
         snakefile: workflow/Snakefile
         args: "--use-conda --show-failed-logs --dryrun"
 
     - name: run workflow
       uses: snakemake/snakemake-github-action@v2
       with:
+        directory: .
         snakefile: workflow/Snakefile
         args: "--use-conda --show-failed-logs --cores 3 --conda-cleanup-pkgs cache --all-temp"
 
     - name: run report
       uses: snakemake/snakemake-github-action@v2
       with:
+        directory: .
         snakefile: workflow/Snakefile
         args: "--report report.zip"
