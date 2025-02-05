@@ -17,4 +17,4 @@ jobs:
         id: release
         with:
           release-type: simple
-          token: ${{ secrets.PERSONAL_RELEASE_PLEASE_TOKEN_DL }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
