@@ -12,8 +12,10 @@ min_version("8.24.1")
 
 configfile: "config/config.yaml"
 
+
 ALL_CIRCLES = lookup(dpath=f"circles", within=config).keys()
 ALL_SEGMENTS = [s for c in config["circles"] for s in config["circles"][c]]
+
 
 wildcard_constraints:
     circle="|".join(ALL_CIRCLES),

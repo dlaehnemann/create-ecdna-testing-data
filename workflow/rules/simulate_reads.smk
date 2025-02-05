@@ -80,10 +80,11 @@ rule download_nanosim_genome_model:
         "logs/{model_files}_download.log",
     shell:
         "(cd resources/; "
-        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; " # TODO: make this more flexible with newer pretrained models
+        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         "rm human_NA12878_DNA_FAB49712_guppy.tar.gz; "
         ") 2>{log}"
+        # TODO: make this more flexible with newer pretrained models
 
 
 rule simulate_nanopore_reads:
