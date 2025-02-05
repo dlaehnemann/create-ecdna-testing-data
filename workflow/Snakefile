@@ -5,6 +5,10 @@
 import pandas as pd
 import numpy as np
 
+from snakemake.utils import min_version
+
+min_version("8.24.1")
+
 
 configfile: "config/config.yaml"
 
