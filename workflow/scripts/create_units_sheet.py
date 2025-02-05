@@ -31,7 +31,7 @@ with open(snakemake.output.tsv, "w") as out:
                     [
                         f"{g}_{alias}_n",
                         "u1",
-                        f"raw/{g}/nanopore{snakemake.params.nanopore_model}/{g}.{alias}.mean_fragment_nucleotides_{snakemake.params.mean_nuc_nanopore}.fq.gz",
+                        f"raw/{g}/nanopore/{snakemake.params.nanopore_model}{g}.{alias}.mean_fragment_nucleotides_{snakemake.params.mean_nuc_nanopore}.fq.gz",
                         "",
                     ]
                 )
