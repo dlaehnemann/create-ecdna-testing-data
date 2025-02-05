@@ -13,7 +13,10 @@ rule config_segment_to_bed:
 
 rule segment_bed_to_fasta:
     input:
-        fasta=f"resources/chromosome_{lookup(dpath= "circles/{circle}/{segment}/chrom", within= config)}.fa",
+        fasta=expand(
+            "resources/chromosome_{chrom}.fa",
+            chrom=lookup(dpath="circles/{circle}/{segment}/chrom", within=config),
+        ),
         bed="results/segments/{circle}.{segment}.bed",
     output:
         fasta="results/segments/{circle}.{segment}.fa.gz",
