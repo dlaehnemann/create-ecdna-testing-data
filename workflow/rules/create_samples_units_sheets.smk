@@ -15,9 +15,14 @@ rule create_units_sheet:
         "logs/samples/units.tsv.log",
     localrule: True
     params:
-        mean_nuc_illumina=lookup(dpath="parameters/mean_illumina_joint_read_length", within=config),
-        mean_nuc_nanopore=lookup(dpath="parameters/mean_nanopore_read_length", within=config),
-        nanopore_model=lookup(dpath="parameters/nanosim_pretrained_model", within=config),
+        mean_nuc_illumina=lookup(
+            dpath="parameters/mean_illumina_joint_read_length", within=config
+        ),
+        mean_nuc_nanopore=lookup(
+            dpath="parameters/mean_nanopore_read_length", within=config
+        ),
+        nanopore_model=lookup(
+            dpath="parameters/nanosim_pretrained_model", within=config
+        ),
     script:
         "../create_units_sheet.py"
-
