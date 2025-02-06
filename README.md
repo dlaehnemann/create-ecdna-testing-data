@@ -1,7 +1,10 @@
 # Snakemake workflow: `create-ecdna-testing-data`
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥6.3.0-brightgreen.svg)](https://snakemake.github.io)
-[![GitHub actions status](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Tests/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3ATests)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14814803.svg)](https://doi.org/10.5281/zenodo.14814803)
+[![CI Formatting](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Formatting/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3AFormatting)
+[![CI Linting](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Linting/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3ALinting)
+[![CI Testing](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Testing/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3ATesting)
 
 
 A Snakemake workflow for creating long read (Nanopore with [`NanoSim`](https://github.com/bcgsc/NanoSim)) and short read (Illumina with [`seqkit sliding --circular-genome`](https://bioinf.shenwei.me/seqkit/) and [`mason_simulate`](https://www.seqan.de/apps/mason.html)) testing data for ecDNA analysis workflows.
