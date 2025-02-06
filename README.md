@@ -1,6 +1,7 @@
 # Snakemake workflow: `create-ecdna-testing-data`
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥6.3.0-brightgreen.svg)](https://snakemake.github.io)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14814803.svg)](https://doi.org/10.5281/zenodo.14814803)
 [![GitHub actions status](https://github.com/dlaehnemann/create-ecdna-testing-data/workflows/Tests/badge.svg?branch=main)](https://github.com/dlaehnemann/create-ecdna-testing-data/actions?query=branch%3Amain+workflow%3ATests)
 
 
