@@ -128,7 +128,7 @@ rule simulate_nanopore_reads:
     log:
         "logs/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.log",
     params:
-        extra=lambda wc: f"--coverage {wc.coverage} --basecaller {lookup(dpath=f"parameters/nanosim_basecaller", within=config)} -dna_type circular",
+        extra=lambda wc: f"--coverage {wc.coverage} -dna_type circular",
     resources:
         mem_mb=8000,
     threads: 4
