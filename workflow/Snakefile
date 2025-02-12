@@ -20,7 +20,9 @@ ALL_SEGMENTS = [s for c in config["circles"] for s in config["circles"][c]]
 wildcard_constraints:
     circle="|".join(ALL_CIRCLES),
     segment="|".join(ALL_SEGMENTS),
-    model="|".join(["human_NA12878_DNA_FAB49712_guppy/training/", ""]),
+    model="|".join(
+        [lookup(dpath=f"parameters/nanosim_pretrained_model", within=config), ""]
+    ),
     technology="|".join(["nanopore", "illumina"]),
 
 

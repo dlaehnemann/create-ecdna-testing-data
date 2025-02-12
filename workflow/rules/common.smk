@@ -19,8 +19,8 @@ def final_output():
         final_output.extend(
             expand(
                 [
-                    "results/quality_control/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
-                    "results/quality_control/mosdepth_coverage/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
+                    "results/quality_control/{group}/nanopore/{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+                    "results/quality_control/mosdepth_coverage/{group}/nanopore/{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
                 group=g,
                 model=lookup(
@@ -67,13 +67,12 @@ def determine_nanopore_median_nuc(wildcards):
 def get_sample_input_circle_reads(wc):
     circles = lookup(dpath=f"groups/{wc.group}/{wc.alias}", within=config)
     files = []
-    model = "" if wc.model == "" else f"{wc.model}"
     for c in circles:
         cov = lookup(dpath=f"groups/{wc.group}/{wc.alias}/{c}", within=config)
-        if wc.model != "":
+        if wc.model_folder != "":
             cov = int(int(cov) / 4)
         files.append(
-            f"results/circles/{c}/{wc.technology}/{model}{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
+            f"results/circles/{c}/{wc.technology}/{wc.model_folder}{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
         )
     return files
 
@@ -97,7 +96,7 @@ def get_package_data_files(wc):
         file_list.extend(
             expand(
                 [
-                    "results/samples/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
+                    "results/samples/{group}/nanopore/{model}/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
                 ],
                 group=g,
                 model=lookup(
