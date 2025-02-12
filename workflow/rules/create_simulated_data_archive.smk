@@ -30,3 +30,16 @@ rule create_units_sheet:
         ),
     script:
         "../scripts/create_units_sheet.py"
+
+
+rule package_full_simulated_dataset:
+    input:
+        files=get_package_data_files,
+    output:
+        archive="results/simulated_ecdna_data_package.tar.gz",
+    log:
+        "results/simulated_ecdna_data_package.tar.gz",
+    conda:
+        "../envs/tar.yaml"
+    shell:
+        "tar czfv {output.archive} {input.files} 2>{log}"
