@@ -19,8 +19,8 @@ reference:
 
 parameters:
   mean_illumina_joint_read_length: 300
-  mean_nanopore_read_length: 2300
   nanosim_pretrained_model: "human_giab_hg002_sub1M_kitv14_dorado_v3.2.1"
+  nanosim_basecaller: "dorado"
 
 # SAMPLE SETUP
 

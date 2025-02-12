@@ -121,29 +121,28 @@ rule simulate_nanopore_reads:
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-        tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
-        reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
-        errors="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
-        unaligned_reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.fq",  # fastq output requires specification of a --basecaller
+        errors="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.simulated_errors.txt",
+        unaligned_reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.log",
     params:
-        extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular",  # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
+        extra=lambda wc: f"--coverage {wc.coverage} --basecaller {lookup(dpath=f"parameters/nanosim_basecaller", within=config)} -dna_type circular",
     resources:
         mem_mb=8000,
     threads: 4
     wrapper:
-        "v5.7.0-2-g01c4cb4/bio/nanosim/simulator"
+        "v5.8.0/bio/nanosim/simulator"
 
 
 rule create_full_sample:
     input:
         fqs=get_sample_input_circle_reads,
     output:
-        fq="results/samples/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
+        fq="raw/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}{read}fq.gz",
     log:
-        "logs/samples/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
+        "logs/samples/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}{read}log",
     conda:
         "../envs/coreutils.yaml"
     localrule: True

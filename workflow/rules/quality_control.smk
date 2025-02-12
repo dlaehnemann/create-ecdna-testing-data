@@ -2,13 +2,13 @@ rule map_reads_minimap2:
     input:
         target="resources/all_used_chromosomes.mmi",
         query=expand(
-            "results/samples/{{group}}/{{technology}}/{{model_folder}}{{group}}.{{alias}}.mean_fragment_nucleotides_{{mean_nuc}}{read}.fq.gz",
-            read=lambda wc: [".1", ".2"] if wc.technology == "illumina" else "",
+            "raw/{{group}}/{{technology}}/{{model_folder}}{{group}}.{{alias}}.{{frag_len}}{reads}fq.gz",
+            reads=lambda wc: ["1.", "2."] if wc.technology == "illumina" else "",
         ),
     output:
-        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}bam",
     log:
-        "logs/map_reads_minimap2/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/map_reads_minimap2/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}log",
     params:
         extra=lambda wc: "-x map-ont" if wc.technology == "nanopore" else "-x sr",  # optional
         sorting="coordinate",  # optional: Enable sorting. Possible values: 'none', 'queryname' or 'coordinate'
@@ -20,11 +20,11 @@ rule map_reads_minimap2:
 
 rule samtools_index:
     input:
-        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
+        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}bam",
     output:
-        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam.bai",
+        "results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}bam.bai",
     log:
-        "logs/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.index_bam.log",
+        "logs/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}index_bam.log",
     params:
         extra="",  # optional params string
     threads: 4  # This value - 1 will be sent to -@
@@ -57,17 +57,17 @@ rule create_all_segments_bed:
 
 rule mosdepth_cram:
     input:
-        bam="results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
-        bai="results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam.bai",
+        bam="results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}bam",
+        bai="results/quality_control/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}bam.bai",
         bed="results/segments/all_segments.bed",
         fasta="resources/all_used_chromosomes.fa",
     output:
-        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.global.dist.txt",
-        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.region.dist.txt",
-        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
-        summary="results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.mosdepth.summary.txt",  # this named output is required for prefix parsing
+        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}mosdepth.global.dist.txt",
+        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}mosdepth.region.dist.txt",
+        "results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}regions.bed.gz",
+        summary="results/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}mosdepth.summary.txt",  # this named output is required for prefix parsing
     log:
-        "logs/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.coverage.log",
+        "logs/quality_control/mosdepth_coverage/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}coverage.log",
     params:
         extra="--no-per-base",  # optional
     # additional decompression threads through `--threads`
