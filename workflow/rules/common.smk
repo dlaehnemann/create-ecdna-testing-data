@@ -1,11 +1,10 @@
 # function defining the main workflow output
 def final_output():
-    final_output = []
+    final_output = ["results/simulated_ecdna_data_package.tar.gz"]
     for g in lookup(dpath="groups", within=config):
         final_output.extend(
             expand(
                 [
-                    "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
                     "results/quality_control/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
                     "results/quality_control/mosdepth_coverage/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
@@ -20,7 +19,6 @@ def final_output():
         final_output.extend(
             expand(
                 [
-                    "results/samples/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
                     "results/quality_control/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.bam",
                     "results/quality_control/mosdepth_coverage/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.regions.bed.gz",
                 ],
@@ -33,12 +31,6 @@ def final_output():
                     dpath=f"parameters/mean_nanopore_read_length", within=config
                 ),
             )
-        )
-        final_output.extend(
-            [
-                "results/samples/samples.tsv",
-                "results/samples/units.tsv",
-            ]
         )
     return final_output
 
@@ -84,3 +76,44 @@ def get_sample_input_circle_reads(wc):
             f"results/circles/{c}/{wc.technology}/{model}{c}.{cov}X.mean_fragment_nucleotides_{wc.mean_nuc}{wc.read}.fq",
         )
     return files
+
+
+def get_package_data_files(wc):
+    file_list = []
+    for g in lookup(dpath="groups", within=config):
+        file_list.extend(
+            expand(
+                [
+                    "results/samples/{group}/illumina/{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
+                ],
+                group=g,
+                alias=lookup(dpath=f"groups/{g}", within=config),
+                mean_nuc=lookup(
+                    dpath=f"parameters/mean_illumina_joint_read_length", within=config
+                ),
+                read=[".1", ".2"],
+            )
+        )
+        file_list.extend(
+            expand(
+                [
+                    "results/samples/{group}/nanopore/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}.fq.gz",
+                ],
+                group=g,
+                model=lookup(
+                    dpath=f"parameters/nanosim_pretrained_model", within=config
+                ),
+                alias=lookup(dpath=f"groups/{g}", within=config),
+                mean_nuc=lookup(
+                    dpath=f"parameters/mean_nanopore_read_length", within=config
+                ),
+            )
+        )
+        file_list.extend(
+            [
+                "results/samples/samples.tsv",
+                "results/samples/units.tsv",
+                "config/config.yaml",
+            ]
+        )
+    return file_list
