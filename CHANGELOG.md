@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/dlaehnemann/create-ecdna-testing-data/compare/v1.0.0...v1.1.0) (2025-02-12)
+
+
+### Features
+
+* automatically create archive with simulated data and config ([#8](https://github.com/dlaehnemann/create-ecdna-testing-data/issues/8)) ([0e79ef3](https://github.com/dlaehnemann/create-ecdna-testing-data/commit/0e79ef3e26ac9bf24038d2f94c9ffa67ab58f67e))
+
+
+### Bug Fixes
+
+* CI Tests badge ([#6](https://github.com/dlaehnemann/create-ecdna-testing-data/issues/6)) ([45ae3e4](https://github.com/dlaehnemann/create-ecdna-testing-data/commit/45ae3e440c49d102802637981901f05e3ef60c22))
+
 ## 1.0.0 (2025-02-05)
 
 
