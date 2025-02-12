@@ -1,8 +1,6 @@
 # function defining the main workflow output
 def final_output():
-    final_output = [
-        "results/simulated_ecdna_data_package.tar.gz"
-    ]
+    final_output = ["results/simulated_ecdna_data_package.tar.gz"]
     for g in lookup(dpath="groups", within=config):
         final_output.extend(
             expand(
@@ -119,4 +117,3 @@ def get_package_data_files(wc):
             ]
         )
     return file_list
-
