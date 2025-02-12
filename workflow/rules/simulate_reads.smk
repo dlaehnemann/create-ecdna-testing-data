@@ -58,17 +58,24 @@ rule simulate_illumina_reads:
 rule download_nanosim_genome_model:
     output:
         model=multiext(
-            "resources/{model_files}",
+            "resources/{model}/training",
             "_aligned_reads.pkl",
             "_aligned_region.pkl",
+            "_base_qualities_model_parameters.tsv",
             "_chimeric_info",
+            "_del.hist",
             "_error_markov_model",
             "_error_rate.tsv",
             "_first_match.hist",
             "_gap_length.pkl",
+            "_hp_lengths_model_parameters.tsv",
+            "_hp_lengths.tsv",
             "_ht_length.pkl",
             "_ht_ratio.pkl",
+            "_ins.hist",
+            "_match.hist",
             "_match_markov_model",
+            "_mis.hist",
             "_model_profile",
             "_reads_alignment_rate",
             "_strandness_rate",
@@ -77,12 +84,12 @@ rule download_nanosim_genome_model:
     conda:
         "../envs/download.yaml"
     log:
-        "logs/{model_files}_download.log",
+        "logs/{model}/training_download.log",
     shell:
         "(cd resources/; "
-        "wget https://github.com/bcgsc/NanoSim/raw/v3.1.0/pre-trained_models/human_NA12878_DNA_FAB49712_guppy.tar.gz; "
-        "tar xzf human_NA12878_DNA_FAB49712_guppy.tar.gz; "
-        "rm human_NA12878_DNA_FAB49712_guppy.tar.gz; "
+        "wget https://github.com/bcgsc/NanoSim/raw/refs/heads/master/pre-trained_models/{wildcards.model}.tar.gz; "
+        "tar xzf {wildcards.model}.tar.gz; "
+        "rm {wildcards.model}.tar.gz; "
         ") 2>{log}"
         # TODO: make this more flexible with newer pretrained models
 
@@ -91,45 +98,51 @@ rule simulate_nanopore_reads:
     input:
         reference_genome="results/circles/{circle}/{circle}.fa",
         model=multiext(
-            "resources/{model_files}",
+            "resources/{model}/training",
             "_aligned_reads.pkl",
             "_aligned_region.pkl",
+            "_base_qualities_model_parameters.tsv",
             "_chimeric_info",
+            "_del.hist",
             "_error_markov_model",
             "_error_rate.tsv",
             "_first_match.hist",
             "_gap_length.pkl",
+            "_hp_lengths_model_parameters.tsv",
+            "_hp_lengths.tsv",
             "_ht_length.pkl",
             "_ht_ratio.pkl",
+            "_ins.hist",
+            "_match.hist",
             "_match_markov_model",
+            "_mis.hist",
             "_model_profile",
             "_reads_alignment_rate",
             "_strandness_rate",
             "_unaligned_length.pkl",
         ),
-        tsv="results/circles/{circle}/{circle}.stats.tsv",
     output:
-        reads="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.fq",  # fastq output requires specification of a --basecaller
-        errors="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.simulated_errors.txt",
-        unaligned_reads="results/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}simulated_reads.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
+        reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.fq",  # fastq output requires specification of a --basecaller
+        errors="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.simulated_errors.txt",
+        unaligned_reads="results/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.unaligned.fq",  # asking for unaligned_reads implicitly turns off --perfect
     log:
-        "logs/circles/{circle}/nanopore/{model_files}/{circle}.{coverage}X.mean_fragment_nucleotides_{mean_nuc}.log",
+        "logs/circles/{circle}/nanopore/{model}/{circle}.{coverage}X.log",
     params:
-        extra=lambda wc, input: f"--number {determine_fragment_number(wc, input)} --median_len {determine_nanopore_median_nuc(wc)} --sd_len {SD_LOGNORMAL} --basecaller guppy -dna_type circular",  # --median_len is really used as the mean length argument in numpy.random.lognormal, see here: https://github.com/bcgsc/NanoSim/blob/23911b67ce4733f0468ac26296e25348e3b73b4b/src/simulator.py#L1411
+        extra=lambda wc: f"--coverage {wc.coverage} -dna_type circular",
     resources:
         mem_mb=8000,
     threads: 4
     wrapper:
-        "v5.5.2/bio/nanosim/simulator"
+        "v5.8.0/bio/nanosim/simulator"
 
 
 rule create_full_sample:
     input:
         fqs=get_sample_input_circle_reads,
     output:
-        fq="results/samples/{group}/{technology}/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.fq.gz",
+        fq="raw/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}{read}fq.gz",
     log:
-        "logs/samples/{group}/{technology}/{model}{group}.{alias}.mean_fragment_nucleotides_{mean_nuc}{read}.log",
+        "logs/samples/{group}/{technology}/{model_folder}{group}.{alias}.{frag_len}{read}log",
     conda:
         "../envs/coreutils.yaml"
     localrule: True

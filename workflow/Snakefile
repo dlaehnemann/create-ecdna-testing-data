@@ -13,14 +13,33 @@ min_version("8.24.1")
 configfile: "config/config.yaml"
 
 
+ALL_GROUPS = lookup(dpath=f"groups", within=config).keys()
+ALL_ALIASES = {a for g in config["groups"] for a in config["groups"][g]}
 ALL_CIRCLES = lookup(dpath=f"circles", within=config).keys()
 ALL_SEGMENTS = [s for c in config["circles"] for s in config["circles"][c]]
 
 
 wildcard_constraints:
+    alias="|".join(ALL_ALIASES),
     circle="|".join(ALL_CIRCLES),
+    frag_len="|".join(
+        [
+            f"mean_fragment_nucleotides_{lookup(dpath= "parameters/mean_illumina_joint_read_length", within= config)}.",
+            "",
+        ]
+    ),
+    group="|".join(ALL_GROUPS),
+    model="|".join(
+        [lookup(dpath="parameters/nanosim_pretrained_model", within=config), ""]
+    ),
+    model_folder="|".join(
+        [
+            f"{lookup(dpath= "parameters/nanosim_pretrained_model", within= config)}/",
+            "",
+        ]
+    ),
+    read="|".join(["1.", "2.", ""]),
     segment="|".join(ALL_SEGMENTS),
-    model="|".join(["human_NA12878_DNA_FAB49712_guppy/training/", ""]),
     technology="|".join(["nanopore", "illumina"]),
 
 
